@@ -9,7 +9,7 @@ class AppLauncher:
     @staticmethod
     def start_app():
         # 启动 web 服务
-        web_server.app.run(host='0.0.0.0')
+        web_server.app.run()
 
 
 if __name__ == '__main__':
