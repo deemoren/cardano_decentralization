@@ -5,10 +5,6 @@ import psycopg2
 import json
 
 class Api(BaseApi):
-    """
-    这个 api 的访问路径为：/test/hello
-    无需定义路由，文件路径即 api 路径。
-    """
 
     def run(self, input) -> ApiOutput:
         DB_NAME = "cexplorer"
@@ -16,9 +12,7 @@ class Api(BaseApi):
         DB_USER = "siri"
         DB_PASS = "PasswordYouWant"
         DB_PORT =  "5432"
-        """
-        这里的 input 为 api 入参，类型为 dict。
-        """
+
             
         conn = psycopg2.connect(
                                     dbname   =   DB_NAME,
