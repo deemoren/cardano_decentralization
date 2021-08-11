@@ -3,14 +3,11 @@ from api.base.dto.api_output import ApiOutput
 import pandas as pd
 import psycopg2
 import json
-# 设置任何人都可以访问
+
 
 
 class Api(BaseApi):
-    """
-    这个 api 的访问路径为：/test/hello
-    无需定义路由，文件路径即 api 路径。
-    """
+
     
     def run(self, input) -> ApiOutput:
                 
@@ -36,12 +33,12 @@ class Api(BaseApi):
                 return x_df
 
 
-        # 各个epoch里的有效池的hash_id 和pledge
+
         sqp_valid_pools_each_epoch = "select pool_hash_id, epoch_no, active_pledge from V_POOL_HISTORY_BY_EPOCH;"
         pool_pledge = from_sql_to_df(sqp_valid_pools_each_epoch)
         pool_pledge.columns = ["pool_hash_id", "epoch_no", "pledge_amount"]
         
-        # 各个epoch里有效池的stake amount
+
         sql_stake_distribution = "SELECT pool_id, sum (amount), epoch_no FROM epoch_stake GROUP BY pool_id, epoch_no ;"
         stake_distribution = from_sql_to_df(sql_stake_distribution)
         stake_distribution.columns = [ "pool_hash_id","pool_amount", "epoch_no"]
@@ -50,7 +47,7 @@ class Api(BaseApi):
         pool_pledge_amount = pd.merge(pool_pledge,stake_distribution, on = ['pool_hash_id','epoch_no'], how='left')
 
 
-        #  各个epoch里pool_onwer 的信息
+
         sql_pool_owner_addr = 'select epoch_no, pool_hash_id, addr_id from v_pool_owners_by_epoch;'
         pool_owner_addr = from_sql_to_df(sql_pool_owner_addr)
         pool_owner_addr.columns = [ "epoch_no", "pool_hash_id",  "addr_id"]
@@ -82,11 +79,9 @@ class Api(BaseApi):
 
 
 
-        # 对于没有pledge数据的pledge填0 处理，后面要找出这些是0的池子，看一下它们是什么情况
+
         leverage["pledge_amount"] = leverage["pledge_amount"].fillna(0)
         pool_pledge_is_0 = leverage[leverage["pledge_amount"] == 0]
-        # # 对大部分没有delegation历史的owner的delegation_amount填0
-        # pool_pledge_is_0.to_csv("/home/siri/Desktop/pool_pledge_is_0.csv")
 
 
         leverage_delegation = leverage.loc[:,['pool_hash_id', 'epoch_no', 'delegation_amount']]
@@ -96,9 +91,9 @@ class Api(BaseApi):
 
 
         leverage_count = pd.merge(pool_pledge_amount, leverage_delegation, on=['epoch_no','pool_hash_id'])
-        # # pool_pledge_amount_delegation.to_csv("/home/siri/Desktop/pool_pledge_amount_delegation.csv")
 
-        # # 转换数据类型
+
+
         leverage_count["pledge_amount"] = leverage_count["pledge_amount"].astype('float')
         leverage_count["pool_amount"] = leverage_count["pool_amount"].astype('float')
         leverage_count["delegation_amount"] = leverage_count["delegation_amount"].astype('float')
