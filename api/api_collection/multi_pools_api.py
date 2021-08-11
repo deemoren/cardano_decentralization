@@ -52,9 +52,7 @@ class Api(BaseApi):
         owner_multiple_pools = pool_owner_addr.groupby(by = ["epoch_no","owner_address_id","stake_address"])["pool_hash_id"].count()
         result = owner_multiple_pools.to_json(orient="index")
         parsed = json.loads(result)
-        # print(gini_df.head(10))
-        # gini_df.to_csv("/home/siri/Desktop/gini_c.csv")
-        # dis conn
+
         cur.close()
         conn.close()
 
@@ -64,5 +62,4 @@ class Api(BaseApi):
         # db.query("SELECT * from table")
 
         return ApiOutput.success(parsed)
-
 
