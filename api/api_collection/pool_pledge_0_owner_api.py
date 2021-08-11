@@ -48,6 +48,7 @@ class Api(BaseApi):
         #1. 产生block的pool跟有amount的pool，by epoch的对比
         #1.1 找到所有产生block的pool by epoch
         # Get the block number of blocks created in an epoch by all pools
+
         sql_block_pool = """
         select block.epoch_no, pool_hash.id, count (*) as block_count from block 
         inner join slot_leader on block.slot_leader_id = slot_leader.id
@@ -82,17 +83,18 @@ class Api(BaseApi):
         pool_pledge_0_owner = pool_pledge_0_owner.merge(block_pool,  on =["epoch_no","pool_hash_id"], how = "left")
         pool_pledge_0_owner = pool_pledge_0_owner.merge(stake_distribution, on =["epoch_no","pool_hash_id"], how = "left")
 
+        # 加上 pool.view
+        sql_view = 'select id,view from pool_hash;'
+        view = from_sql_to_df(sql_view)
+        view.columns = ["pool_hash_id","view"]
+        pool_pledge_0_owner = pool_pledge_0_owner.merge(view, on = ["pool_hash_id"], how = "left")
+
         result = pool_pledge_0_owner.to_json(orient="records")
         parsed = json.loads(result)
-        # print(gini_df.head(10))
-        # gini_df.to_csv("/home/siri/Desktop/gini_c.csv")
+
         # dis conn
         cur.close()
         conn.close()
 
-        # 访问数据库的操作封装起来，一处定义，多处使用
-        # db.query_as_pd("SELECT * from table")
-        # db.query("SELECT * from table")
 
         return ApiOutput.success(parsed)
-
