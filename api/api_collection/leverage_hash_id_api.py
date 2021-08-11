@@ -97,7 +97,7 @@ class Api(BaseApi):
 
         leverage_count = pd.merge(pool_pledge_amount, leverage_delegation, on=['epoch_no','pool_hash_id'])
         # # pool_pledge_amount_delegation.to_csv("/home/siri/Desktop/pool_pledge_amount_delegation.csv")
-        leverage_count = leverage_count[leverage_count["epoch_no"]>280]
+
         # # 转换数据类型
         leverage_count["pledge_amount"] = leverage_count["pledge_amount"].astype('float')
         leverage_count["pool_amount"] = leverage_count["pool_amount"].astype('float')
