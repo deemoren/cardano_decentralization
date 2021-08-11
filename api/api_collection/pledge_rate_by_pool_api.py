@@ -53,9 +53,6 @@ class Api(BaseApi):
 
 
         pledge_amount.insert(pledge_amount.shape[1], 'pledge_rate', 0)
-
-
-        pledge_amount = pledge_amount[pledge_amount['epoch_no']>280]
         pledge_amount = pledge_amount[pledge_amount['pool_amount']>0]
 
         pledge_amount["pledge_rate"] =  pledge_amount.apply(lambda y : y['pledge_amount']/y['pool_amount'] , axis=1)
