@@ -9,5 +9,5 @@ Prerequisites:
 5. Clone all files to your computer, and run <python3 api_launcher.py> under right dir in terminal
 6. The api address is : http://<your ip address>:5000/<api name>. 
    For example, my ip address is 69.101.34.1, and I want to run gini_api.py to see the gini coefficient of Cardano， then I input:
-   http://69.101.34.1:5000/gini  in my browser.
+   http://69.101.34.1:5000/api_collection/gini  in my browser.
 
