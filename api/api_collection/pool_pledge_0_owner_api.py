@@ -5,15 +5,9 @@ import json
 import pandas as pd
 
 class Api(BaseApi):
-    """
-    这个 api 的访问路径为：/test/hello
-    无需定义路由，文件路径即 api 路径。
-    """
 
     def run(self, input) -> ApiOutput:
-        """
-        这里的 input 为 api 入参，类型为 dict。
-        """
+
         DB_NAME = "cexplorer"
         DB_HOST = "/var/run/postgresql"
         DB_USER = "siri"
@@ -44,9 +38,7 @@ class Api(BaseApi):
         """
         pool_owner_addr = from_sql_to_df(sql_pool_owner_addr)
         pool_owner_addr.columns = [ "epoch_no", "pool_hash_id",  "owner_address_id"]
-        # print("The list of pool owners:", "\n", pool_owner_addr.head(), "\n")
-        #1. 产生block的pool跟有amount的pool，by epoch的对比
-        #1.1 找到所有产生block的pool by epoch
+
         # Get the block number of blocks created in an epoch by all pools
 
         sql_block_pool = """
@@ -65,15 +57,13 @@ class Api(BaseApi):
         # get valid epoch_no
         epoch_list = block_pool['epoch_no'].drop_duplicates().values.tolist()
 
-    #1.2 找到所有pool的pledge / amount by epoch
+
     # get the pool_amount of pools by epoch
         sql_stake_distribution = "SELECT pool_id, sum (amount), epoch_no FROM epoch_stake GROUP BY pool_id, epoch_no ;"
         stake_distribution = from_sql_to_df(sql_stake_distribution)
         stake_distribution.columns = [ "pool_hash_id","pool_amount", "epoch_no"]
 
-    # 2. 有一些pool 的peldge是0->定位一下它们的amount
 
-    # 各个epoch里的有效池的hash_id 和pledge
         sqp_valid_pools_each_epoch = "select pool_hash_id, epoch_no, active_pledge from V_POOL_HISTORY_BY_EPOCH;"
         pool_pledge = from_sql_to_df(sqp_valid_pools_each_epoch)
         pool_pledge.columns = ["pool_hash_id", "epoch_no", "pledge"]
@@ -83,7 +73,7 @@ class Api(BaseApi):
         pool_pledge_0_owner = pool_pledge_0_owner.merge(block_pool,  on =["epoch_no","pool_hash_id"], how = "left")
         pool_pledge_0_owner = pool_pledge_0_owner.merge(stake_distribution, on =["epoch_no","pool_hash_id"], how = "left")
 
-        # 加上 pool.view
+        # plus pool.view
         sql_view = 'select id,view from pool_hash;'
         view = from_sql_to_df(sql_view)
         view.columns = ["pool_hash_id","view"]
