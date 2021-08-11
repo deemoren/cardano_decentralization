@@ -63,4 +63,3 @@ class Api(BaseApi):
         # db.query("SELECT * from table")
 
         return ApiOutput.success(str(x))
-
