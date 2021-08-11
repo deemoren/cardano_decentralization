@@ -1,4 +1,4 @@
-# cardano_decentralization
+# The Degree of Decentralization of Cardano blockchain
 Monitor the decentralization level of Cardano blockchain.
 
 ## Cardano Decentralization API
