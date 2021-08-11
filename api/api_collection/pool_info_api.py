@@ -13,88 +13,125 @@ class Api(BaseApi):
 
     def run(self, input) -> ApiOutput:
                 
-        DB_NAME = "cexplorer"
-        DB_HOST = "/var/run/postgresql"
-        DB_USER = "siri"
-        DB_PASS = "PasswordYouWant"
-        DB_PORT =  "5432"
-        """
-        这里的 input 为 api 入参，类型为 dict。
-        """
-    #try conn
-        conn = psycopg2.connect(
-                                    dbname   =   DB_NAME,
-                                    host     =   DB_HOST,
-                                    user     =   DB_USER,
-                                    password =   DB_PASS,
-                                    port = DB_PORT
-                        )
-        # define cursor
-        cur = conn.cursor()
-        cur.execute("SELECT version();") 
-        def from_sql_to_df (sql_x):
-            cur.execute(sql_x)
-            x = cur.fetchall()
-            x_df = pd.DataFrame(list(x))
-            return x_df
-    #  pool owners of current valid pools ,and of pools on selected epoch
-        sql_pool_owner_addr = """
-        select epoch_no, pool_hash_id, addr_id from v_pool_owners_by_epoch;
-        """
-        pool_owner_addr = from_sql_to_df(sql_pool_owner_addr)
-        pool_owner_addr.columns = [ "epoch_no", "pool_hash_id",  "owner_address_id"]
-        # print("The list of pool owners:", "\n", pool_owner_addr.head(), "\n")
-        sql_ddr = """
-        select id, view from stake_address;
-        """
-        addr_relay = from_sql_to_df(sql_ddr)
-        addr_relay.columns = [ "addr_id", "stake_address"]
-
-        pool_owner_addr=pool_owner_addr.merge(addr_relay, left_on ="owner_address_id", right_on="addr_id", how = "left")
-
-        #1. 产生block的pool跟有amount的pool，by epoch的对比
-        #1.1 找到所有产生block的pool by epoch
-        # Get the block number of blocks created in an epoch by all pools
-        sql_block_pool = """
-        select block.epoch_no, pool_hash.id, count (*) as block_count from block 
-        inner join slot_leader on block.slot_leader_id = slot_leader.id
-        inner join pool_hash on slot_leader.pool_hash_id = pool_hash.id
-        group by block.epoch_no, pool_hash.id ;
-        """
-
-        block_pool = from_sql_to_df(sql_block_pool)
-        block_pool.columns = [ "epoch_no", "pool_hash_id", "block_amount"]
 
 
-        # get valid epoch_no
-        epoch_list = block_pool['epoch_no'].drop_duplicates().values.tolist()
+		
+	DB_NAME = "cexplorer"
+	DB_HOST = "/var/run/postgresql"
+	DB_USER = "siri"
+	DB_PASS = "PasswordYouWant"
+	DB_PORT =  "5432"
+	"""
+	这里的 input 为 api 入参，类型为 dict。
+	"""
+	# 连接数据库
+	conn = psycopg2.connect(
+			            dbname   =   DB_NAME,
+			            host     =   DB_HOST,
+			            user     =   DB_USER,
+			            password =   DB_PASS,
+			            port = DB_PORT
+			)
 
-    #1.2 找到所有pool的pledge / amount by epoch
-    # get the pool_amount of pools by epoch
-        sql_stake_distribution = "SELECT pool_id, sum (amount), epoch_no FROM epoch_stake GROUP BY pool_id, epoch_no ;"
-        stake_distribution = from_sql_to_df(sql_stake_distribution)
-        stake_distribution.columns = [ "pool_hash_id","pool_amount", "epoch_no"]
+	cur = conn.cursor()
+
+	def from_sql_to_df (sql_x):
+	    cur.execute(sql_x)
+	    x = cur.fetchall()
+	    x_df = pd.DataFrame(list(x))
+	    return x_df
 
 
-    # 2. 有一些pool 的peldge是0->定位一下它们的amount
+	#  pool owner的信息
+	sql_pool_owner_addr = """
+	select epoch_no, pool_hash_id, addr_id from v_pool_owners_by_epoch where epoch_no<281;
+	"""
+	pool_owner_addr = from_sql_to_df(sql_pool_owner_addr)
+	pool_owner_addr.columns = [ "epoch_no", "pool_hash_id",  "owner_address_id"]
+	pool_owner_addr["is_owner"] = 1
+	print(1)
+	print(pool_owner_addr.head())
 
-    # 各个epoch里的有效池的hash_id 和pledge
-        sqp_valid_pools_each_epoch = "select pool_hash_id,pool_id, epoch_no, active_pledge from V_POOL_HISTORY_BY_EPOCH;"
-        pool_pledge = from_sql_to_df(sqp_valid_pools_each_epoch)
-        pool_pledge.columns = ["pool_hash_id","poool_id", "epoch_no", "pledge"]
-        pool_pledge_0_owner = pool_pledge.merge(pool_owner_addr, on =["epoch_no","pool_hash_id"], how = "left")
-        pool_pledge_0_owner = pool_pledge_0_owner.merge(block_pool,  on =["epoch_no","pool_hash_id"], how = "left")
-        pool_pledge_0_owner = pool_pledge_0_owner.merge(stake_distribution, on =["epoch_no","pool_hash_id"], how = "left")
 
-        result = pool_pledge_0_owner.to_json(orient="records")
-        parsed = json.loads(result)
-        # print(gini_df.head(10))
-        # gini_df.to_csv("/home/siri/Desktop/gini_c.csv")
-        # dis conn
-        cur.close()
-        conn.close()
 
-        return ApiOutput.success(parsed)
+	# delegators 的信息
+	sql_delegators_info = ''' select delegation.active_epoch_no,stake_address.id, pool_hash.id,epoch_stake.amount
+	from delegation 
+	inner join stake_address on delegation.addr_id = stake_address.id
+	inner join pool_hash on delegation.pool_hash_id = pool_hash.id
+	inner join epoch_stake on stake_address.id = epoch_stake.addr_id
+	where delegation.active_epoch_no<281;
+	'''
+	delegators_info = from_sql_to_df(sql_delegators_info)
+	delegators_info.columns = ['epoch_no',  'addr_id',  'pool_hash_id',   'pool_hash_view',   'delegation_amount']
+	delegators_info['is_delegator'] =1
+	print(2)
+	print(delegators_info.head())
 
+
+
+	# 所有人的 stake 地址
+	sql_ddr = """
+	select id, view from stake_address;
+	"""
+	addr_relay = from_sql_to_df(sql_ddr)
+	addr_relay.columns = [ "addr_id", "stake_address"]
+
+	# epoch+pool 去对应owner和delegator
+	owner_delegator = pool_owner_addr.merge(delegators_info, on=['epoch_no','pool_hash_id'], how = 'outer')
+	owner_delegator_addr = owner_delegator.merge(addr_relay, on = ['addr_id'], how = 'left')
+	print(3)
+	print(owner_delegator_addr.head())
+
+	# 每个pool在不同epoch产生的block数
+	sql_block_pool = """
+	select block.epoch_no, pool_hash.id, count (*) as block_count from block 
+	inner join slot_leader on block.slot_leader_id = slot_leader.id
+	inner join pool_hash on slot_leader.pool_hash_id = pool_hash.id
+	where block.epoch_no<281
+	group by block.epoch_no, pool_hash.id ;
+	"""
+	block_pool = from_sql_to_df(sql_block_pool)
+	block_pool.columns = [ "epoch_no", "pool_hash_id", "block_amount"]
+	print(4)
+	print(block_pool.head())
+
+	#每个pool 在不同 epoch的pledge / amount by epoch
+	sql_stake_distribution = "SELECT pool_id, sum (amount), epoch_no FROM epoch_stake where epoch_no<281 GROUP BY pool_id, epoch_no ;"
+	stake_distribution = from_sql_to_df(sql_stake_distribution)
+	stake_distribution.columns = [ "pool_hash_id","pool_amount", "epoch_no"]
+	print(5)
+	print(stake_distribution.head())
+
+	sql_pledge = 'select epoch_no, pool_hash_id, active_pledge from v_pool_history_by_epoch where epoch_no<281;'
+	pledge = from_sql_to_df(sql_pledge)
+	pledge.columns = ['epoch_no','pool_hash_id','pledge']
+	print(6)
+	print(pledge.head())
+
+
+	block_pledge = pledge.merge(block_pool, on=['epoch_no','pool_hash_id'], how = 'outer')
+	block_pledge_amount = block_pledge.merge(stake_distribution, on=['epoch_no','pool_hash_id'], how = 'outer')
+	print(7)
+	print(block_pledge_amount.head())
+
+	# 加上每个pool的地址信息
+	sql_pool_id_view = "select id, view from pool_hash;"
+	pool_id_view = from_sql_to_df(sql_pool_id_view)
+	pool_id_view.columns = ['pool_hash_id','pool_hash_view']
+	block_pledge_amount = block_pledge_amount.merge(pool_id_view, on = ['pool_hash_id'], how = 'left')
+	print(55555555)
+	print(block_pledge_amount.head())
+	# 把所有信息merge在一起
+	pool_info = pd.merge(block_pledge_amount,owner_delegator_addr, on = ['epoch_no','pool_hash_id'], how = "outer" )
+	print(8)
+	print(pool_info.head())
+	pool_info.to_csv('/home/siri/Desktop/data/pool_info.csv')
+
+	result = pool_pledge_0_owner.to_json(orient="records")
+	parsed = json.loads(result)
+
+
+    return ApiOutput.success(parsed)
 
 
