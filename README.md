@@ -41,7 +41,11 @@ Here is a list of the function of all APIs:
  
  
 ## Cardano Decentralization Website
+ 
 This website is developed based on Node.js. This website is just a visualization tool. 
-Because the website relays on the data in my server, please visit it from : https://www.jialiang.info (hopefully this website can be visit before 13 Oct 2021 unless I get a fund or donation to support my server fee)
+
+Because the website relays on the data in my server, please visit it from : https://www.jialiang.info
+ 
+Hopefully this website can be viewed before 13 Oct 2021. Unless I get a fund or donation to support my server fee, I will have to stop it after 13 Oct.
 
 
