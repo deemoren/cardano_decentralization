@@ -5,9 +5,14 @@ import psycopg2
 import json
 
 class Api(BaseApi):
-
+    """
+    这个 api 的访问路径为：/test/hello
+    无需定义路由，文件路径即 api 路径。
+    """
     def run(self, input) -> ApiOutput:
-            
+        """
+        这里的 input 为 api 入参，类型为 dict。
+        """       
         DB_NAME = "cexplorer"
         DB_HOST = "/var/run/postgresql"
         DB_USER = "siri"
@@ -50,5 +55,6 @@ class Api(BaseApi):
 
         cur.close()
         conn.close()
+
         return ApiOutput.success(parsed)
 
