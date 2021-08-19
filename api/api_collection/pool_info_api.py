@@ -44,7 +44,7 @@ class Api(BaseApi):
 
 	#  pool owner的信息
 	sql_pool_owner_addr = """
-	select epoch_no, pool_hash_id, addr_id from v_pool_owners_by_epoch where epoch_no<281;
+	select epoch_no, pool_hash_id, addr_id from v_pool_owners_by_epoch;
 	"""
 	pool_owner_addr = from_sql_to_df(sql_pool_owner_addr)
 	pool_owner_addr.columns = [ "epoch_no", "pool_hash_id",  "owner_address_id"]
@@ -59,8 +59,7 @@ class Api(BaseApi):
 	from delegation 
 	inner join stake_address on delegation.addr_id = stake_address.id
 	inner join pool_hash on delegation.pool_hash_id = pool_hash.id
-	inner join epoch_stake on stake_address.id = epoch_stake.addr_id
-	where delegation.active_epoch_no<281;
+	inner join epoch_stake on stake_address.id = epoch_stake.addr_id;
 	'''
 	delegators_info = from_sql_to_df(sql_delegators_info)
 	delegators_info.columns = ['epoch_no',  'addr_id',  'pool_hash_id',   'pool_hash_view',   'delegation_amount']
@@ -88,7 +87,6 @@ class Api(BaseApi):
 	select block.epoch_no, pool_hash.id, count (*) as block_count from block 
 	inner join slot_leader on block.slot_leader_id = slot_leader.id
 	inner join pool_hash on slot_leader.pool_hash_id = pool_hash.id
-	where block.epoch_no<281
 	group by block.epoch_no, pool_hash.id ;
 	"""
 	block_pool = from_sql_to_df(sql_block_pool)
@@ -97,13 +95,13 @@ class Api(BaseApi):
 	print(block_pool.head())
 
 	#每个pool 在不同 epoch的pledge / amount by epoch
-	sql_stake_distribution = "SELECT pool_id, sum (amount), epoch_no FROM epoch_stake where epoch_no<281 GROUP BY pool_id, epoch_no ;"
+	sql_stake_distribution = "SELECT pool_id, sum (amount), epoch_no FROM epoch_stake GROUP BY pool_id, epoch_no ;"
 	stake_distribution = from_sql_to_df(sql_stake_distribution)
 	stake_distribution.columns = [ "pool_hash_id","pool_amount", "epoch_no"]
 	print(5)
 	print(stake_distribution.head())
 
-	sql_pledge = 'select epoch_no, pool_hash_id, active_pledge from v_pool_history_by_epoch where epoch_no<281;'
+	sql_pledge = 'select epoch_no, pool_hash_id, active_pledge from v_pool_history_by_epoch;'
 	pledge = from_sql_to_df(sql_pledge)
 	pledge.columns = ['epoch_no','pool_hash_id','pledge']
 	print(6)
