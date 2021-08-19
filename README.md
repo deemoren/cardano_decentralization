@@ -37,7 +37,7 @@ Here is a list of the function of all APIs:
 
  11. **pool_pledge_0_owner_api.py**: lists all pools without pledge.
  
- 12. **shannon_NCR_DL_api.py**: calculates Shannon entropy, NCR, and DL divergence in one API.
+ 12. **shannon_NCR_KL_api.py**: calculates Shannon entropy, NCR, and KL divergence in one API.
  
  
 ## Cardano Decentralization Website
