@@ -7,15 +7,21 @@ import json
 
 
 class Api(BaseApi):
+    """
+    这个 api 的访问路径为：/test/hello
+    无需定义路由，文件路径即 api 路径。
+    """
 
     def run(self, input) -> ApiOutput:
-
+        """
+        这里的 input 为 api 入参，类型为 dict。
+        """
         DB_NAME = "cexplorer"
         DB_HOST = "/var/run/postgresql"
         DB_USER = "siri"
         DB_PASS = "PasswordYouWant"
         DB_PORT =  "5432"
-
+        # 访问数据库的操作封装起来，一处定义，多处使用
         # db.query_as_pd("SELECT * from table")
         # db.query("SELECT * from table")
     #try conn
@@ -76,8 +82,6 @@ class Api(BaseApi):
             shannon_list.append(shannon_tuple)
         shannon_df = pd.DataFrame(shannon_list)
         shannon_df.columns = ["epoch_no", "Shanno_Entropy", "max_value_of_SE","51_attack_colluders","pool_numbers","KL"]
-        
-        # NCR = 51_attack_colluders / pool_numbers
         result = shannon_df.to_json(orient="records")
         parsed = json.loads(result)
         cur.close()
