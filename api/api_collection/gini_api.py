@@ -63,6 +63,8 @@ class Api(BaseApi):
         block_pool = from_sql_to_df(sql_block_pool)
         block_pool.columns = [ "epoch_no", "pool_hash_id", "block_amount"]
 
+        # 找到>280 epoch的
+        block_pool = block_pool[block_pool["epoch_no"] > 280]
         # get valid epoch_no
         epoch_list = block_pool['epoch_no'].drop_duplicates().values.tolist()
     # calculate the gini_coefficient of all valid epoch
